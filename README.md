@@ -53,6 +53,8 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 - AV1 への対応
 - Windows への対応
+  - Direct3D 11 対応
+  - Direct3D 12 対応
 - macOS への対応
   - Apple M1 対応
 - Android への対応

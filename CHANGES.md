@@ -11,6 +11,11 @@
 
 ## develop
 
+- [ADD] Windows Direct3D 12 への対応
+  - Unity の Direct3D 12 レンダラーを使用して Unity カメラ映像を取得できるようになる
+  - IUnityGraphicsD3D12 インターフェースを追加
+  - UnityCameraCapturer に D3D12Impl を追加
+  - @kobarei
 - [CHANGE] VideoCodecImplementation の NvidiaVideoCodecSdk を NvidiaVideoCodec に変更する
   - @torikizi
 - [CHANGE] Sora.cs を Nullable 対応にする

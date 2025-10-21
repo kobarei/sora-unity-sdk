@@ -46,9 +46,13 @@ void UnityContext::OnGraphicsDeviceEvent(UnityGfxDeviceEventType eventType) {
       RTC_LOG(LS_INFO) << "Renderer Type is "
                        << UnityGfxRendererToString(renderer_type);
 #ifdef SORA_UNITY_SDK_WINDOWS
+      renderer_type_ = renderer_type;
       if (renderer_type == kUnityGfxRendererD3D11) {
         device_ = ifs_->Get<IUnityGraphicsD3D11>()->GetDevice();
         device_->GetImmediateContext(&context_);
+      } else if (renderer_type == kUnityGfxRendererD3D12) {
+        device_d3d12_ = ifs_->Get<IUnityGraphicsD3D12>()->GetDevice();
+        command_queue_d3d12_ = ifs_->Get<IUnityGraphicsD3D12>()->GetCommandQueue();
       }
 #endif
       break;
@@ -60,6 +64,9 @@ void UnityContext::OnGraphicsDeviceEvent(UnityGfxDeviceEventType eventType) {
         context_ = nullptr;
       }
       device_ = nullptr;
+      device_d3d12_ = nullptr;
+      command_queue_d3d12_ = nullptr;
+      renderer_type_ = kUnityGfxRendererNull;
 #endif
 
       if (graphics_ != nullptr) {
@@ -82,7 +89,7 @@ UnityContext& UnityContext::Instance() {
 bool UnityContext::IsInitialized() {
   std::lock_guard<std::mutex> guard(mutex_);
 #ifdef SORA_UNITY_SDK_WINDOWS
-  return ifs_ != nullptr && device_ != nullptr;
+  return ifs_ != nullptr && (device_ != nullptr || device_d3d12_ != nullptr);
 #endif
 
 #if defined(SORA_UNITY_SDK_MACOS) || defined(SORA_UNITY_SDK_IOS)
@@ -159,6 +166,21 @@ ID3D11Device* UnityContext::GetDevice() {
 ID3D11DeviceContext* UnityContext::GetDeviceContext() {
   std::lock_guard<std::mutex> guard(mutex_);
   return context_;
+}
+
+ID3D12Device* UnityContext::GetDeviceD3D12() {
+  std::lock_guard<std::mutex> guard(mutex_);
+  return device_d3d12_;
+}
+
+ID3D12CommandQueue* UnityContext::GetCommandQueueD3D12() {
+  std::lock_guard<std::mutex> guard(mutex_);
+  return command_queue_d3d12_;
+}
+
+UnityGfxRenderer UnityContext::GetRendererType() {
+  std::lock_guard<std::mutex> guard(mutex_);
+  return renderer_type_;
 }
 #endif
 
