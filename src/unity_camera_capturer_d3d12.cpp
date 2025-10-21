@@ -32,6 +32,17 @@ bool UnityCameraCapturer::D3D12Impl::Init(UnityContext* context,
     return false;
   }
 
+  // カメラテクスチャのリソース記述を取得してサイズを計算
+  ID3D12Resource* camera_resource = (ID3D12Resource*)camera_texture;
+  D3D12_RESOURCE_DESC texture_desc = camera_resource->GetDesc();
+
+  D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
+  UINT num_rows;
+  UINT64 row_size_in_bytes;
+  UINT64 total_bytes;
+  device->GetCopyableFootprints(
+      &texture_desc, 0, 1, 0, &layout, &num_rows, &row_size_in_bytes, &total_bytes);
+
   // リードバック用のバッファを作成
   D3D12_HEAP_PROPERTIES heap_props = {};
   heap_props.Type = D3D12_HEAP_TYPE_READBACK;
@@ -43,7 +54,7 @@ bool UnityCameraCapturer::D3D12Impl::Init(UnityContext* context,
   D3D12_RESOURCE_DESC resource_desc = {};
   resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
   resource_desc.Alignment = 0;
-  resource_desc.Width = width * height * 4;
+  resource_desc.Width = total_bytes;
   resource_desc.Height = 1;
   resource_desc.DepthOrArraySize = 1;
   resource_desc.MipLevels = 1;

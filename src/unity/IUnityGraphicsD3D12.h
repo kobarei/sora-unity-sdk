@@ -23,11 +23,6 @@ UNITY_DECLARE_INTERFACE(IUnityGraphicsD3D12) {
                   TextureFromRenderBuffer)(UnityRenderBuffer buffer);
   ID3D12Resource*(UNITY_INTERFACE_API *
                   TextureFromNativeTexture)(UnityTextureID texture);
-
-  ID3D12RenderTargetView*(UNITY_INTERFACE_API *
-                          RTVFromRenderBuffer)(UnityRenderBuffer surface);
-  ID3D12ShaderResourceView*(UNITY_INTERFACE_API *
-                            SRVFromNativeTexture)(UnityTextureID texture);
 };
 
 UNITY_REGISTER_INTERFACE_GUID(0xEC449D8DE5B04CF1ULL,
