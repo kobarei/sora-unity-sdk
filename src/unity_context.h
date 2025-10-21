@@ -11,6 +11,7 @@
 
 #ifdef SORA_UNITY_SDK_WINDOWS
 #include "unity/IUnityGraphicsD3D11.h"
+#include "unity/IUnityGraphicsD3D12.h"
 #endif
 
 namespace sora_unity_sdk {
@@ -42,10 +43,16 @@ class UnityContext {
  private:
   ID3D11Device* device_ = nullptr;
   ID3D11DeviceContext* context_ = nullptr;
+  ID3D12Device* device_d3d12_ = nullptr;
+  ID3D12CommandQueue* command_queue_d3d12_ = nullptr;
+  UnityGfxRenderer renderer_type_ = kUnityGfxRendererNull;
 
  public:
   ID3D11Device* GetDevice();
   ID3D11DeviceContext* GetDeviceContext();
+  ID3D12Device* GetDeviceD3D12();
+  ID3D12CommandQueue* GetCommandQueueD3D12();
+  UnityGfxRenderer GetRendererType();
 #endif
 };
 

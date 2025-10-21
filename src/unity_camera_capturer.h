@@ -57,6 +57,25 @@ class UnityCameraCapturer
               int height) override;
     webrtc::scoped_refptr<webrtc::I420Buffer> Capture() override;
   };
+
+  class D3D12Impl : public Impl {
+    UnityContext* context_;
+    void* camera_texture_;
+    void* readback_buffer_;
+    void* readback_fence_;
+    UINT64 fence_value_;
+    HANDLE fence_event_;
+    int width_;
+    int height_;
+
+   public:
+    ~D3D12Impl() override;
+    bool Init(UnityContext* context,
+              void* camera_texture,
+              int width,
+              int height) override;
+    webrtc::scoped_refptr<webrtc::I420Buffer> Capture() override;
+  };
 #endif
 
 #if defined(SORA_UNITY_SDK_MACOS) || defined(SORA_UNITY_SDK_IOS)
