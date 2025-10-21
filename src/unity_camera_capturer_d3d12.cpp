@@ -133,15 +133,30 @@ UnityCameraCapturer::D3D12Impl::Capture() {
   // テクスチャの説明を取得
   D3D12_RESOURCE_DESC texture_desc = camera_resource->GetDesc();
 
+  // Unityのインターフェースを使ってリソースステートを取得・変更
+  auto unity_d3d12 = context_->GetInterfaces()->Get<IUnityGraphicsD3D12>();
+  D3D12_RESOURCE_STATES current_state = D3D12_RESOURCE_STATE_RENDER_TARGET;
+  bool state_retrieved = false;
+  
+  if (unity_d3d12 != nullptr) {
+    state_retrieved = unity_d3d12->GetResourceState(camera_resource, &current_state);
+    if (state_retrieved) {
+      // UnityにCOPY_SOURCEステートへの遷移を要求
+      unity_d3d12->SetResourceState(camera_resource, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    }
+  }
+
   // リソースバリア: テクスチャをCOPY_SOURCEステートに遷移
-  D3D12_RESOURCE_BARRIER barrier = {};
-  barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-  barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-  barrier.Transition.pResource = camera_resource;
-  barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-  barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
-  barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-  command_list->ResourceBarrier(1, &barrier);
+  if (!state_retrieved || current_state != D3D12_RESOURCE_STATE_COPY_SOURCE) {
+    D3D12_RESOURCE_BARRIER barrier = {};
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.Transition.pResource = camera_resource;
+    barrier.Transition.StateBefore = current_state;
+    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
+    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    command_list->ResourceBarrier(1, &barrier);
+  }
 
   // テクスチャからリードバックバッファにコピー
   D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout;
@@ -164,9 +179,21 @@ UnityCameraCapturer::D3D12Impl::Capture() {
   command_list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
 
   // リソースバリア: テクスチャを元のステートに戻す
-  barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_SOURCE;
-  barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-  command_list->ResourceBarrier(1, &barrier);
+  if (!state_retrieved || current_state != D3D12_RESOURCE_STATE_COPY_SOURCE) {
+    D3D12_RESOURCE_BARRIER barrier = {};
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.Transition.pResource = camera_resource;
+    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_SOURCE;
+    barrier.Transition.StateAfter = current_state;
+    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    command_list->ResourceBarrier(1, &barrier);
+  }
+
+  // Unityにリソースステートを元に戻すことを通知
+  if (state_retrieved && unity_d3d12 != nullptr) {
+    unity_d3d12->SetResourceState(camera_resource, current_state);
+  }
 
   // コマンドリストをクローズ
   hr = command_list->Close();
